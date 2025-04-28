@@ -9,38 +9,47 @@ on:
   pull_request:
     branches: [ master ]  
 jobs:
-  build:
-    runs-on: windows-latest
+  msw-msvs:
+    runs-on: windows-${{ matrix.vsversion }}
+    name: wxMSW vs${{ matrix.vsversion }} ${{ matrix.configuration }} ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - configuration: 'Debug'
+            platform: 'Win32'
+            vsversion: 2019
+          - configuration: 'DLL Release'
+            platform: 'x64'
+            vsversion: 2019
     steps:
-      - uses: actions/checkout@v2
-      - name: check out project quick-print
-        run: echo ${env:PATH}
-        shell: pwsh
-      - name: display github.workspace by pwsh
-        run: |
-          echo "github.workspace is ${{ github.workspace }}."
-          ls ${{ github.workspace }}
-        shell: pwsh
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
 
-      - name: CMake Build
+      - name: Configure build options
+        working-directory: include/wx/msw
         run: |
-          cd ${{ github.workspace }}
-          ls 
-          #mkdir build
-          cd build
-          cmake --version
-          cmake -DCNAME_INSTALL_PREFIX=${{ github.workspace }} ../
-          ls
-        shell: pwsh
-      - name: CMake Install
-        env:
-          prefix: ${{ github.workspace }}
+            $use_utf8 = "${{ matrix.use_utf8 }}" ? 1 : 0
+            if ( $use_utf8 ) {
+              $txt = Get-Content setup.h
+              Write-Output $txt |
+              %{$_ -replace "define wxUSE_UNICODE_UTF8 0", "define wxUSE_UNICODE_UTF8 $use_utf8"} |
+              Set-Content setup.h
+            }
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+        with:
+            vs-prerelease: true
+
+      - name: Build
         run: |
-            cd ${{ github.workspace }}/build
-            ls
-            cmake --build . --target INSTALL --config release
-            ls "${{ env.prefix }}"
-            cd "${{ env.prefix }}/bin"
-            ls 
-            ./CMakePrj.exe
-        shell: pwsh
+            msbuild /noLogo /m '/p:Configuration=${{ matrix.configuration }}' /p:Platform=${{ matrix.platform }} build\msw\wx_vc16.sln
+            if ( '${{ matrix.configuration }}'.IndexOf('DLL') -ne -1 ) {
+                $dlldir = Join-Path (Get-Location) 'lib\vc_${{ matrix.platform }}_dll'
+                Write-Output "Adding $dlldir to the PATH"
+                $dlldir | Out-File -Append $env:GITHUB_PATH
+            }
+      
