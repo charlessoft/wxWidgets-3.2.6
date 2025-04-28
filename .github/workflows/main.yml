@@ -1,0 +1,46 @@
+name: CI
+on:
+  repository_dispatch:
+    types:
+      - webhook-1
+      - webhook-2
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]  
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: check out project quick-print
+        run: echo ${env:PATH}
+        shell: pwsh
+      - name: display github.workspace by pwsh
+        run: |
+          echo "github.workspace is ${{ github.workspace }}."
+          ls ${{ github.workspace }}
+        shell: pwsh
+
+      - name: CMake Build
+        run: |
+          cd ${{ github.workspace }}
+          ls 
+          mkdir build
+          cd build
+          cmake --version
+          cmake -DCNAME_INSTALL_PREFIX=${{ github.workspace }} ../
+          ls
+        shell: pwsh
+      - name: CMake Install
+        env:
+          prefix: ${{ github.workspace }}
+        run: |
+            cd ${{ github.workspace }}/build
+            ls
+            cmake --build . --target INSTALL --config release
+            ls "${{ env.prefix }}"
+            cd "${{ env.prefix }}/bin"
+            ls 
+            ./CMakePrj.exe
+        shell: pwsh
