@@ -19,7 +19,7 @@ jobs:
           - configuration: 'Debug'
             platform: 'Win32'
             vsversion: 2019
-          - configuration: 'DLL Release'
+          - configuration: 'Release'
             platform: 'x64'
             vsversion: 2019
     steps:
