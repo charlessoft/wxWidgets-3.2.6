@@ -22,12 +22,12 @@ jobs:
           - configuration: 'Release'
             platform: 'Win32'
             vsversion: 2019
-          # - configuration: 'Debug'
-          #   platform: 'x64'
-          #   vsversion: 2019
-          # - configuration: 'Release'
-          #   platform: 'x64'
-          #   vsversion: 2019
+          - configuration: 'Debug'
+            platform: 'x64'
+            vsversion: 2019
+          - configuration: 'Release'
+            platform: 'x64'
+            vsversion: 2019
     steps:
       - name: Checkout
         uses: actions/checkout@v4
