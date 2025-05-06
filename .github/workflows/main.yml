@@ -19,15 +19,15 @@ jobs:
           - configuration: 'Debug'
             platform: 'Win32'
             vsversion: 2019
-          # - configuration: 'Release'
-          #   platform: 'Win32'
-          #   vsversion: 2019
-          # - configuration: 'Debug'
-          #   platform: 'x64'
-          #   vsversion: 2019
-          # - configuration: 'Release'
-          #   platform: 'x64'
-          #   vsversion: 2019
+          - configuration: 'Release'
+            platform: 'Win32'
+            vsversion: 2019
+          - configuration: 'Debug'
+            platform: 'x64'
+            vsversion: 2019
+          - configuration: 'Release'
+            platform: 'x64'
+            vsversion: 2019
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,6 +44,7 @@ jobs:
               %{$_ -replace "define wxUSE_UNICODE_UTF8 0", "define wxUSE_UNICODE_UTF8 $use_utf8"} |
               Set-Content setup.h
             }
+
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
         with:
@@ -57,56 +58,19 @@ jobs:
                 Write-Output "Adding $dlldir to the PATH"
                 $dlldir | Out-File -Append $env:GITHUB_PATH
             }
-      - name: Package Debug files (Win32)
-        if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
-        run: |
-          mkdir -p package
-          mv ./include ./package/
-          mv ./lib/vc_lib ./package/
-      - name: Upload Debug artifact (Win32)
-        if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
-        uses: actions/upload-artifact@v4
-        with:
-          name: vc_lib_dbg_win32
-          path: package
 
-      - name: Package Release files (Win32)
-        if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
+      - name: Package files
         run: |
           mkdir -p package
           mv ./include ./package/
-          mv ./lib/vc_lib ./package/
-      - name: Upload Release artifact (Win32)
-        if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
-        uses: actions/upload-artifact@v4
-        with:
-          name: vc_lib_rel_win32
-          path: package
+          mv ./lib/vc_${{ matrix.platform }}_lib ./package/
+        env:
+          LIB_DIR: ${{ matrix.platform == 'Win32' ? 'vc_lib' : 'vc_x64_lib' }}
 
-      - name: Package Debug files (x64)
-        if: matrix.configuration == 'Debug' && matrix.platform == 'x64'
-        run: |
-          mkdir -p package
-          mv ./include ./package/
-          mv ./lib/vc_x64_lib ./package/
-      - name: Upload Debug artifact (x64)
-        if: matrix.configuration == 'Debug' && matrix.platform == 'x64'
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vc_lib_dbg_x64
-          path: package
-
-      - name: Package Release files (x64)
-        if: matrix.configuration == 'Release' && matrix.platform == 'x64'
-        run: |
-          mkdir -p package
-          mv ./include ./package/
-          mv ./lib/vc_x64_lib ./package/
-      - name: Upload Release artifact (x64)
-        if: matrix.configuration == 'Release' && matrix.platform == 'x64'
-        uses: actions/upload-artifact@v4
-        with:
-          name: vc_lib_rel_x64
+          name: vc_lib_${{ matrix.configuration | lower }}_${{ matrix.platform | lower }}
           path: package
 
   create-release:
@@ -132,7 +96,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create $RELEASE_DATE -t "Release $RELEASE_DATE" -n "Automated release for $RELEASE_DATE"
        
-
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -142,7 +105,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload $RELEASE_DATE ./artifacts/vc_lib_dbg_win32.zip
-          gh release upload $RELEASE_DATE ./artifacts/vc_lib_rel_win32.zip
-          gh release upload $RELEASE_DATE ./artifacts/vc_lib_dbg_x64.zip
-          gh release upload $RELEASE_DATE ./artifacts/vc_lib_rel_x64.zip
+          for artifact in ./artifacts/*.zip; do
+            gh release upload $RELEASE_DATE "$artifact"
+          done
