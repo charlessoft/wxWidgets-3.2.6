@@ -140,16 +140,19 @@ jobs:
 
       - name: Compress Artifacts
         run: |
-          zip -r ./artifacts/vc_lib_dbg_win32.zip ./artifacts/vc_lib_dbg_win32
-          zip -r ./artifacts/vc_lib_rel_win32.zip ./artifacts/vc_lib_rel_win32
-          zip -r ./artifacts/vc_lib_dbg_x64.zip ./artifacts/vc_lib_dbg_x64
-          zip -r ./artifacts/vc_lib_rel_x64.zip ./artifacts/vc_lib_rel_x64
+          cd ./artifacts
+          
+          zip -r ./vc_lib_dbg_win32.zip ./vc_lib_dbg_win32
+          zip -r ./vc_lib_rel_win32.zip ./vc_lib_rel_win32
+          zip -r ./vc_lib_dbg_x64.zip ./vc_lib_dbg_x64
+          zip -r ./vc_lib_rel_x64.zip ./vc_lib_rel_x64
 
       - name: Upload Artifacts to Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload $RELEASE_DATE ./artifacts/vc_lib_dbg_win32.zip
-          gh release upload $RELEASE_DATE ./artifacts/vc_lib_rel_win32.zip
-          gh release upload $RELEASE_DATE ./artifacts/vc_lib_dbg_x64.zip
-          gh release upload $RELEASE_DATE ./artifacts/vc_lib_rel_x64.zip
+          cd ./artifacts
+          gh release upload $RELEASE_DATE ./vc_lib_dbg_win32.zip
+          gh release upload $RELEASE_DATE ./vc_lib_rel_win32.zip
+          gh release upload $RELEASE_DATE ./vc_lib_dbg_x64.zip
+          gh release upload $RELEASE_DATE ./vc_lib_rel_x64.zip
