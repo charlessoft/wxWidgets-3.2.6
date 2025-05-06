@@ -58,33 +58,27 @@ jobs:
                 Write-Output "Adding $dlldir to the PATH"
                 $dlldir | Out-File -Append $env:GITHUB_PATH
             }
-      - name: Package files
+      - name: Package Debug files
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
         run: |
-            mkdir -p package
-            cp ./lib/vc_lib/xxd.lib ./package/
-            cp ./lib/vc_lib/xxd.pdb ./package/
-            zip -r vc_lib_dbg.zip package/
-      
-      - name: Package files
-        if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
-        run: |
-            mkdir -p package
-            cp ./lib/vc_lib/xx.lib ./package/
-            cp ./lib/vc_lib/xx.pdb ./package/
-            zip -r vc_lib_rel.zip package/
-      
-      - name: Upload artifact (Debug)
+          zip -r vc_lib_dbg.zip ./lib/vc_lib/
+
+      - name: Upload Debug artifact
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: vc_lib_dbg.zip
+          name: vc_lib_dbg
           path: vc_lib_dbg.zip
-      
-      - name: Upload artifact (Release)
+
+      - name: Package Release files
         if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
-        uses: actions/upload-artifact@v4
+        run: |
+          zip -r vc_lib_rel.zip ./lib/vc_lib/
+
+      - name: Upload Release artifact
+        if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
+        uses: actions/upload-artifact@v3
         with:
-          name: vc_lib_rel.zip
+          name: vc_lib_rel
           path: vc_lib_rel.zip
 
