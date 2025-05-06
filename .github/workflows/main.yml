@@ -140,12 +140,23 @@ jobs:
 
       - name: Compress Artifacts
         run: |
-          cd ./artifacts
+          cd ./artifacts/vc_lib_dbg_win32
+          zip -r ../vc_lib_dbg_win32.zip ./*
           
-          zip -r ./vc_lib_dbg_win32.zip ./vc_lib_dbg_win32
-          zip -r ./vc_lib_rel_win32.zip ./vc_lib_rel_win32
-          zip -r ./vc_lib_dbg_x64.zip ./vc_lib_dbg_x64
-          zip -r ./vc_lib_rel_x64.zip ./vc_lib_rel_x64
+          cd ../vc_lib_rel_win32
+          zip -r ../vc_lib_rel_win32.zip ./*
+
+          cd ../vc_lib_dbg_x64
+          zip -r ../vc_lib_dbg_x64.zip ./*
+
+          cd ../vc_lib_rel_x64
+          zip -r ../vc_lib_rel_x64.zip ./*
+          
+          
+          # zip -r ./vc_lib_dbg_win32.zip ./vc_lib_dbg_win32
+          # zip -r ./vc_lib_rel_win32.zip ./vc_lib_rel_win32
+          # zip -r ./vc_lib_dbg_x64.zip ./vc_lib_dbg_x64
+          # zip -r ./vc_lib_rel_x64.zip ./vc_lib_rel_x64
 
       - name: Upload Artifacts to Release
         env:
