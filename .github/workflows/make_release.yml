@@ -38,14 +38,18 @@ jobs:
       with:
         name: vc_lib_rel_x64
 
-    - name: Delete existing release if exists
+    - name: Check for existing release
+      id: check_release
       run: |
         existing_release_id=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ inputs.tag_name }}" | jq -r '.id')
-        if [ "$existing_release_id" != "null" ]; then
-          curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/releases/$existing_release_id"
-        fi
+        echo "release_id=$existing_release_id" >> $GITHUB_ENV
+
+    - name: Delete existing release if exists
+      if: ${{ env.release_id != 'null' }}
+      run: |
+        curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+        "https://api.github.com/repos/${{ github.repository }}/releases/${{ env.release_id }}"
 
     - name: Create Release
       uses: actions/create-release@v1
