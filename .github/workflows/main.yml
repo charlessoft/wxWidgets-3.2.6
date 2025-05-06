@@ -61,8 +61,12 @@ jobs:
       - name: Package Debug files
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
         run: |
-          mv ./include ./lib/
-          cd lib
+          mkdir -p package
+          # 移动 include 和 lib/vc_lib 到 package 目录
+          mv ./include ./package/
+          mv ./lib/vc_lib ./package/
+          # mv ./include ./lib/
+          # cd lib
           #Compress-Archive -Path vc_lib/*, include/* -DestinationPath vc_lib_dbg.zip
           # zip -r vc_lib_dbg.zip ./vc_lib/ ./include
           echo "Contents of lib directory after compression:"
@@ -73,12 +77,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vc_lib_dbg.zip
-          path: lib/vc_lib_dbg
+          path: package
 
       - name: Package Release files
         if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
         run: |
-          mv ./include ./lib/
+          mkdir -p package
+          # 移动 include 和 lib/vc_lib 到 package 目录
+          mv ./include ./package/
+          mv ./lib/vc_lib ./package/
+          # mv ./include ./lib/
           #cd lib
           #Compress-Archive -Path vc_lib/*, include/* -DestinationPath vc_lib_rel.zip
 
@@ -87,5 +95,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vc_lib_rel.zip
-          path: lib/vc_lib_rel
+          path: package
 
