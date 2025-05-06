@@ -116,17 +116,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up environment
+        run: echo "RELEASE_DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+        
       - name: Install GitHub CLI
-        # uses: actions/setup-gh-cli@v2
         uses: sersoft-gmbh/setup-gh-cli-action@v2
-
-      - name: Create or Update Release
+        
+      - name: Delete existing release
+        run: gh release delete $RELEASE_DATE --yes || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_DATE: $(date +'%Y%m%d')
-        run: |
-          gh release delete $RELEASE_DATE --yes || true
-          gh release create $RELEASE_DATE -t "Release $RELEASE_DATE" -n "Automated release for $RELEASE_DATE"
+
+      - name: Create new release
+        run: gh release create $RELEASE_DATE -t "Release $RELEASE_DATE" -n "Automated release for $RELEASE_DATE"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download Artifacts
         uses: actions/download-artifact@v4
