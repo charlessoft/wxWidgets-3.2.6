@@ -44,7 +44,6 @@ jobs:
               %{$_ -replace "define wxUSE_UNICODE_UTF8 0", "define wxUSE_UNICODE_UTF8 $use_utf8"} |
               Set-Content setup.h
             }
-
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
         with:
@@ -64,7 +63,6 @@ jobs:
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_lib ./package/
-
       - name: Upload Debug artifact (Win32)
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
         uses: actions/upload-artifact@v4
@@ -78,7 +76,6 @@ jobs:
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_lib ./package/
-
       - name: Upload Release artifact (Win32)
         if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
         uses: actions/upload-artifact@v4
@@ -92,7 +89,6 @@ jobs:
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_x64_lib ./package/
-
       - name: Upload Debug artifact (x64)
         if: matrix.configuration == 'Debug' && matrix.platform == 'x64'
         uses: actions/upload-artifact@v4
@@ -106,7 +102,6 @@ jobs:
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_x64_lib ./package/
-
       - name: Upload Release artifact (x64)
         if: matrix.configuration == 'Release' && matrix.platform == 'x64'
         uses: actions/upload-artifact@v4
@@ -114,3 +109,31 @@ jobs:
           name: vc_lib_rel_x64
           path: package
 
+  create-release:
+    runs-on: ubuntu-latest
+    needs: msw-msvs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GitHub CLI
+        uses: actions/setup-gh-cli@v2
+
+      - name: Create or Update Release
+        env:
+          RELEASE_DATE: $(date +'%Y%m%d')
+        run: |
+          gh release delete $RELEASE_DATE --yes || true
+          gh release create $RELEASE_DATE -t "Release $RELEASE_DATE" -n "Automated release for $RELEASE_DATE"
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ./artifacts
+
+      - name: Upload Artifacts to Release
+        run: |
+          gh release upload $RELEASE_DATE ./artifacts/vc_lib_dbg_win32.zip
+          gh release upload $RELEASE_DATE ./artifacts/vc_lib_rel_win32.zip
+          gh release upload $RELEASE_DATE ./artifacts/vc_lib_dbg_x64.zip
+          gh release upload $RELEASE_DATE ./artifacts/vc_lib_rel_x64.zip
