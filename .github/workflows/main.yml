@@ -65,13 +65,15 @@ jobs:
           cd lib
           Compress-Archive -Path vc_lib/*, include/* -DestinationPath vc_lib_dbg.zip
           # zip -r vc_lib_dbg.zip ./vc_lib/ ./include
+          echo "Contents of lib directory after compression:"
+          dir
 
       - name: Upload Debug artifact
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
         uses: actions/upload-artifact@v4
         with:
           name: vc_lib_dbg
-          path: vc_lib_dbg.zip
+          path: lib/vc_lib_dbg.zip
 
       - name: Package Release files
         if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
@@ -85,5 +87,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vc_lib_rel
-          path: vc_lib_rel.zip
+          path: lib/vc_lib_rel.zip
 
