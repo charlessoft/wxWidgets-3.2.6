@@ -20,8 +20,14 @@ jobs:
             platform: 'Win32'
             vsversion: 2019
           - configuration: 'Release'
-            platform: 'x64'
+            platform: 'Win32'
             vsversion: 2019
+          # - configuration: 'Debug'
+          #   platform: 'x64'
+          #   vsversion: 2019
+          # - configuration: 'Release'
+          #   platform: 'x64'
+          #   vsversion: 2019
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,4 +58,33 @@ jobs:
                 Write-Output "Adding $dlldir to the PATH"
                 $dlldir | Out-File -Append $env:GITHUB_PATH
             }
+      - name: Package files
+        if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
+        run: |
+            mkdir -p package
+            cp ./lib/vc_lib/xxd.lib ./package/
+            cp ./lib/vc_lib/xxd.pdb ./package/
+            zip -r vc_lib_dbg.zip package/
       
+      - name: Package files
+        if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
+        run: |
+            mkdir -p package
+            cp ./lib/vc_lib/xx.lib ./package/
+            cp ./lib/vc_lib/xx.pdb ./package/
+            zip -r vc_lib_rel.zip package/
+      
+      - name: Upload artifact (Debug)
+        if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
+        uses: actions/upload-artifact@v3
+        with:
+          name: vc_lib_dbg.zip
+          path: vc_lib_dbg.zip
+      
+      - name: Upload artifact (Release)
+        if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
+        uses: actions/upload-artifact@v3
+        with:
+          name: vc_lib_rel.zip
+          path: vc_lib_rel.zip
+
