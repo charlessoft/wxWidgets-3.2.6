@@ -139,6 +139,8 @@ jobs:
           path: ./artifacts
 
       - name: Upload Artifacts to Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload $RELEASE_DATE ./artifacts/vc_lib_dbg_win32.zip
           gh release upload $RELEASE_DATE ./artifacts/vc_lib_rel_win32.zip
