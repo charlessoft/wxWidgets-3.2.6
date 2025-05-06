@@ -58,42 +58,59 @@ jobs:
                 Write-Output "Adding $dlldir to the PATH"
                 $dlldir | Out-File -Append $env:GITHUB_PATH
             }
-      - name: Package Debug files
+      - name: Package Debug files (Win32)
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
         run: |
           mkdir -p package
-          # 移动 include 和 lib/vc_lib 到 package 目录
           mv ./include ./package/
           mv ./lib/vc_lib ./package/
-          # mv ./include ./lib/
-          # cd lib
-          #Compress-Archive -Path vc_lib/*, include/* -DestinationPath vc_lib_dbg.zip
-          # zip -r vc_lib_dbg.zip ./vc_lib/ ./include
-          echo "Contents of lib directory after compression:"
-          dir
 
-      - name: Upload Debug artifact
+      - name: Upload Debug artifact (Win32)
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
         uses: actions/upload-artifact@v4
         with:
-          name: vc_lib_dbg
+          name: vc_lib_dbg_win32
           path: package
 
-      - name: Package Release files
+      - name: Package Release files (Win32)
         if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
         run: |
           mkdir -p package
-          # 移动 include 和 lib/vc_lib 到 package 目录
           mv ./include ./package/
           mv ./lib/vc_lib ./package/
-          # mv ./include ./lib/
-          #cd lib
-          #Compress-Archive -Path vc_lib/*, include/* -DestinationPath vc_lib_rel.zip
 
-      - name: Upload Release artifact
+      - name: Upload Release artifact (Win32)
         if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
         uses: actions/upload-artifact@v4
         with:
-          name: vc_lib_rel
+          name: vc_lib_rel_win32
+          path: package
+
+      - name: Package Debug files (x64)
+        if: matrix.configuration == 'Debug' && matrix.platform == 'x64'
+        run: |
+          mkdir -p package
+          mv ./include ./package/
+          mv ./lib/vc_x64_lib ./package/
+
+      - name: Upload Debug artifact (x64)
+        if: matrix.configuration == 'Debug' && matrix.platform == 'x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vc_lib_dbg_x64
+          path: package
+
+      - name: Package Release files (x64)
+        if: matrix.configuration == 'Release' && matrix.platform == 'x64'
+        run: |
+          mkdir -p package
+          mv ./include ./package/
+          mv ./lib/vc_x64_lib ./package/
+
+      - name: Upload Release artifact (x64)
+        if: matrix.configuration == 'Release' && matrix.platform == 'x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vc_lib_rel_x64
           path: package
 
