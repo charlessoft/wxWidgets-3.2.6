@@ -76,7 +76,7 @@ jobs:
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
         uses: actions/upload-artifact@v4
         with:
-          name: vc_lib_dbg.zip
+          name: vc_lib_dbg
           path: package
 
       - name: Package Release files
@@ -94,6 +94,6 @@ jobs:
         if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
         uses: actions/upload-artifact@v4
         with:
-          name: vc_lib_rel.zip
+          name: vc_lib_rel
           path: package
 
