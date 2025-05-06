@@ -63,7 +63,8 @@ jobs:
         run: |
           cp -r ./include ./lib/
           cd lib
-          zip -r vc_lib_dbg.zip ./vc_lib/ ./include
+          Compress-Archive -Path vc_lib/*, include/* -DestinationPath vc_lib_dbg.zip
+          # zip -r vc_lib_dbg.zip ./vc_lib/ ./include
 
       - name: Upload Debug artifact
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
@@ -77,7 +78,7 @@ jobs:
         run: |
           cp -r ./include ./lib/
           cd lib
-          zip -r vc_lib_rel.zip ./vc_lib/ ./include
+          Compress-Archive -Path vc_lib/*, include/* -DestinationPath vc_lib_rel.zip
 
       - name: Upload Release artifact
         if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
