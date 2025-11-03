@@ -7,7 +7,8 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]  
+    branches: [ master ]
+
 jobs:
   msw-msvs:
     runs-on: windows-${{ matrix.vsversion }}
@@ -18,29 +19,28 @@ jobs:
         include:
           - configuration: 'Debug'
             platform: 'Win32'
-            vsversion: 2022
+            vsversion: 2019
           - configuration: 'Release'
             platform: 'Win32'
-            vsversion: 2022
+            vsversion: 2019
           - configuration: 'Debug'
             platform: 'x64'
-            vsversion: 2022
+            vsversion: 2019
           - configuration: 'Release'
             platform: 'x64'
-            vsversion: 2022
-          # DLL builds
+            vsversion: 2019
           - configuration: 'DLL Debug'
             platform: 'Win32'
-            vsversion: 2022
+            vsversion: 2019
           - configuration: 'DLL Release'
             platform: 'Win32'
-            vsversion: 2022
+            vsversion: 2019
           - configuration: 'DLL Debug'
             platform: 'x64'
-            vsversion: 2022
+            vsversion: 2019
           - configuration: 'DLL Release'
             platform: 'x64'
-            vsversion: 2022
+            vsversion: 2019
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,13 +50,13 @@ jobs:
       - name: Configure build options
         working-directory: include/wx/msw
         run: |
-            $use_utf8 = "${{ matrix.use_utf8 }}" ? 1 : 0
-            if ( $use_utf8 ) {
-              $txt = Get-Content setup.h
-              Write-Output $txt |
-              %{$_ -replace "define wxUSE_UNICODE_UTF8 0", "define wxUSE_UNICODE_UTF8 $use_utf8"} |
-              Set-Content setup.h
-            }
+          $use_utf8 = "${{ matrix.use_utf8 }}" ? 1 : 0
+          if ( $use_utf8 ) {
+            $txt = Get-Content setup.h
+            Write-Output $txt |
+            %{$_ -replace "define wxUSE_UNICODE_UTF8 0", "define wxUSE_UNICODE_UTF8 $use_utf8"} |
+            Set-Content setup.h
+          }
 
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
@@ -65,24 +65,25 @@ jobs:
 
       - name: Build
         run: |
-            msbuild /noLogo /m "/p:Configuration=${{ matrix.configuration }}" /p:Platform=${{ matrix.platform }} build\msw\wx_vc16.sln
-            if ( '${{ matrix.configuration }}'.IndexOf('DLL') -ne -1 ) {
-                if ( '${{ matrix.platform }}' -eq 'Win32') {
-                    $dlldir = Join-Path (Get-Location) 'lib\vc_dll'
-                } else {
-                    $dlldir = Join-Path (Get-Location) 'lib\vc_x64_dll'
-                }
-                Write-Output "Adding $dlldir to the PATH"
-                $dlldir | Out-File -Append $env:GITHUB_PATH
+          msbuild /noLogo /m "/p:Configuration=${{ matrix.configuration }}" /p:Platform=${{ matrix.platform }} build\msw\wx_vc16.sln
+          if ( '${{ matrix.configuration }}'.IndexOf('DLL') -ne -1 ) {
+            if ( '${{ matrix.platform }}' -eq 'Win32') {
+              $dlldir = Join-Path (Get-Location) 'lib\vc_dll'
+            } else {
+              $dlldir = Join-Path (Get-Location) 'lib\vc_x64_dll'
             }
+            Write-Output "Adding $dlldir to the PATH"
+            $dlldir | Out-File -Append $env:GITHUB_PATH
+          }
 
-      # Static library packaging
+      # Static library packaging (删除 .pdb)
       - name: Package Debug files (Win32)
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
         run: |
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_lib ./package/
+          Get-ChildItem -Path ./package/vc_lib -Filter *.pdb -Recurse | Remove-Item -Force
       - name: Upload Debug artifact (Win32)
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
         uses: actions/upload-artifact@v4
@@ -96,6 +97,7 @@ jobs:
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_lib ./package/
+          Get-ChildItem -Path ./package/vc_lib -Filter *.pdb -Recurse | Remove-Item -Force
       - name: Upload Release artifact (Win32)
         if: matrix.configuration == 'Release' && matrix.platform == 'Win32'
         uses: actions/upload-artifact@v4
@@ -109,6 +111,7 @@ jobs:
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_x64_lib ./package/
+          Get-ChildItem -Path ./package/vc_x64_lib -Filter *.pdb -Recurse | Remove-Item -Force
       - name: Upload Debug artifact (x64)
         if: matrix.configuration == 'Debug' && matrix.platform == 'x64'
         uses: actions/upload-artifact@v4
@@ -122,6 +125,7 @@ jobs:
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_x64_lib ./package/
+          Get-ChildItem -Path ./package/vc_x64_lib -Filter *.pdb -Recurse | Remove-Item -Force
       - name: Upload Release artifact (x64)
         if: matrix.configuration == 'Release' && matrix.platform == 'x64'
         uses: actions/upload-artifact@v4
@@ -129,13 +133,14 @@ jobs:
           name: vc_lib_rel_x64
           path: package
 
-      # DLL packaging
+      # DLL packaging (删除 .pdb)
       - name: Package DLL Debug files (Win32)
         if: matrix.configuration == 'DLL Debug' && matrix.platform == 'Win32'
         run: |
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_dll ./package/
+          Get-ChildItem -Path ./package/vc_dll -Filter *.pdb -Recurse | Remove-Item -Force
       - name: Upload DLL Debug artifact (Win32)
         if: matrix.configuration == 'DLL Debug' && matrix.platform == 'Win32'
         uses: actions/upload-artifact@v4
@@ -149,6 +154,7 @@ jobs:
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_dll ./package/
+          Get-ChildItem -Path ./package/vc_dll -Filter *.pdb -Recurse | Remove-Item -Force
       - name: Upload DLL Release artifact (Win32)
         if: matrix.configuration == 'DLL Release' && matrix.platform == 'Win32'
         uses: actions/upload-artifact@v4
@@ -162,6 +168,7 @@ jobs:
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_x64_dll ./package/
+          Get-ChildItem -Path ./package/vc_x64_dll -Filter *.pdb -Recurse | Remove-Item -Force
       - name: Upload DLL Debug artifact (x64)
         if: matrix.configuration == 'DLL Debug' && matrix.platform == 'x64'
         uses: actions/upload-artifact@v4
@@ -175,6 +182,7 @@ jobs:
           mkdir -p package
           mv ./include ./package/
           mv ./lib/vc_x64_dll ./package/
+          Get-ChildItem -Path ./package/vc_x64_dll -Filter *.pdb -Recurse | Remove-Item -Force
       - name: Upload DLL Release artifact (x64)
         if: matrix.configuration == 'DLL Release' && matrix.platform == 'x64'
         uses: actions/upload-artifact@v4
@@ -248,13 +256,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-            cd ./artifacts
-            gh release upload $RELEASE_DATE ./vc_lib_dbg_win32.zip
-            gh release upload $RELEASE_DATE ./vc_lib_rel_win32.zip
-            gh release upload $RELEASE_DATE ./vc_lib_dbg_x64.zip
-            gh release upload $RELEASE_DATE ./vc_lib_rel_x64.zip
-            gh release upload $RELEASE_DATE ./vc_dll_dbg_win32.zip
-            gh release upload $RELEASE_DATE ./vc_dll_rel_win32.zip
-            gh release upload $RELEASE_DATE ./vc_dll_dbg_x64.zip
-            gh release upload $RELEASE_DATE ./vc_dll_rel_x64.zip
-            gh release upload $RELEASE_DATE ./filelist.txt
+          cd ./artifacts
+          gh release upload $RELEASE_DATE ./vc_lib_dbg_win32.zip
+          gh release upload $RELEASE_DATE ./vc_lib_rel_win32.zip
+          gh release upload $RELEASE_DATE ./vc_lib_dbg_x64.zip
+          gh release upload $RELEASE_DATE ./vc_lib_rel_x64.zip
+          gh release upload $RELEASE_DATE ./vc_dll_dbg_win32.zip
+          gh release upload $RELEASE_DATE ./vc_dll_rel_win32.zip
+          gh release upload $RELEASE_DATE ./vc_dll_dbg_x64.zip
+          gh release upload $RELEASE_DATE ./vc_dll_rel_x64.zip
+          gh release upload $RELEASE_DATE ./filelist.txt
