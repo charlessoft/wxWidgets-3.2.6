@@ -28,6 +28,19 @@ jobs:
           - configuration: 'Release'
             platform: 'x64'
             vsversion: 2019
+          # DLL builds
+          - configuration: 'DLL Debug'
+            platform: 'Win32'
+            vsversion: 2019
+          - configuration: 'DLL Release'
+            platform: 'Win32'
+            vsversion: 2019
+          - configuration: 'DLL Debug'
+            platform: 'x64'
+            vsversion: 2019
+          - configuration: 'DLL Release'
+            platform: 'x64'
+            vsversion: 2019
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,19 +57,26 @@ jobs:
               %{$_ -replace "define wxUSE_UNICODE_UTF8 0", "define wxUSE_UNICODE_UTF8 $use_utf8"} |
               Set-Content setup.h
             }
+
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
         with:
-            vs-prerelease: true
+          vs-prerelease: true
 
       - name: Build
         run: |
-            msbuild /noLogo /m '/p:Configuration=${{ matrix.configuration }}' /p:Platform=${{ matrix.platform }} build\msw\wx_vc16.sln
+            msbuild /noLogo /m "/p:Configuration=${{ matrix.configuration }}" /p:Platform=${{ matrix.platform }} build\msw\wx_vc16.sln
             if ( '${{ matrix.configuration }}'.IndexOf('DLL') -ne -1 ) {
-                $dlldir = Join-Path (Get-Location) 'lib\vc_${{ matrix.platform }}_dll'
+                if ( '${{ matrix.platform }}' -eq 'Win32') {
+                    $dlldir = Join-Path (Get-Location) 'lib\vc_dll'
+                } else {
+                    $dlldir = Join-Path (Get-Location) 'lib\vc_x64_dll'
+                }
                 Write-Output "Adding $dlldir to the PATH"
                 $dlldir | Out-File -Append $env:GITHUB_PATH
             }
+
+      # Static library packaging
       - name: Package Debug files (Win32)
         if: matrix.configuration == 'Debug' && matrix.platform == 'Win32'
         run: |
@@ -109,6 +129,59 @@ jobs:
           name: vc_lib_rel_x64
           path: package
 
+      # DLL packaging
+      - name: Package DLL Debug files (Win32)
+        if: matrix.configuration == 'DLL Debug' && matrix.platform == 'Win32'
+        run: |
+          mkdir -p package
+          mv ./include ./package/
+          mv ./lib/vc_dll ./package/
+      - name: Upload DLL Debug artifact (Win32)
+        if: matrix.configuration == 'DLL Debug' && matrix.platform == 'Win32'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vc_dll_dbg_win32
+          path: package
+
+      - name: Package DLL Release files (Win32)
+        if: matrix.configuration == 'DLL Release' && matrix.platform == 'Win32'
+        run: |
+          mkdir -p package
+          mv ./include ./package/
+          mv ./lib/vc_dll ./package/
+      - name: Upload DLL Release artifact (Win32)
+        if: matrix.configuration == 'DLL Release' && matrix.platform == 'Win32'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vc_dll_rel_win32
+          path: package
+
+      - name: Package DLL Debug files (x64)
+        if: matrix.configuration == 'DLL Debug' && matrix.platform == 'x64'
+        run: |
+          mkdir -p package
+          mv ./include ./package/
+          mv ./lib/vc_x64_dll ./package/
+      - name: Upload DLL Debug artifact (x64)
+        if: matrix.configuration == 'DLL Debug' && matrix.platform == 'x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vc_dll_dbg_x64
+          path: package
+
+      - name: Package DLL Release files (x64)
+        if: matrix.configuration == 'DLL Release' && matrix.platform == 'x64'
+        run: |
+          mkdir -p package
+          mv ./include ./package/
+          mv ./lib/vc_x64_dll ./package/
+      - name: Upload DLL Release artifact (x64)
+        if: matrix.configuration == 'DLL Release' && matrix.platform == 'x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vc_dll_rel_x64
+          path: package
+
   create-release:
     runs-on: ubuntu-latest
     needs: msw-msvs
@@ -132,7 +205,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create $RELEASE_DATE -t "Release $RELEASE_DATE" -n "Automated release for $RELEASE_DATE"
 
-
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -142,7 +214,7 @@ jobs:
         run: |
           cd ./artifacts/vc_lib_dbg_win32
           zip -r ../vc_lib_dbg_win32.zip ./*
-          
+
           cd ../vc_lib_rel_win32
           zip -r ../vc_lib_rel_win32.zip ./*
 
@@ -151,31 +223,38 @@ jobs:
 
           cd ../vc_lib_rel_x64
           zip -r ../vc_lib_rel_x64.zip ./*
-          
-          
-          # zip -r ./vc_lib_dbg_win32.zip ./vc_lib_dbg_win32
-          # zip -r ./vc_lib_rel_win32.zip ./vc_lib_rel_win32
-          # zip -r ./vc_lib_dbg_x64.zip ./vc_lib_dbg_x64
-          # zip -r ./vc_lib_rel_x64.zip ./vc_lib_rel_x64
+
+          cd ../vc_dll_dbg_win32
+          zip -r ../vc_dll_dbg_win32.zip ./*
+
+          cd ../vc_dll_rel_win32
+          zip -r ../vc_dll_rel_win32.zip ./*
+
+          cd ../vc_dll_dbg_x64
+          zip -r ../vc_dll_dbg_x64.zip ./*
+
+          cd ../vc_dll_rel_x64
+          zip -r ../vc_dll_rel_x64.zip ./*
 
       - name: Generate MD5 Checksums
         run: |
-          > ./artifacts/filelist.txt  # 清空或创建 filelist.txt 文件
+          > ./artifacts/filelist.txt
           for file in ./artifacts/*.zip; do
-            # Calculate MD5 checksum
             md5sum=$(md5sum "$file" | awk '{ print $1 }')
-            
-            # Write to filelist.txt
             echo "$(basename "$file") | ${md5sum}" >> ./artifacts/filelist.txt
           done
-          
+
       - name: Upload Artifacts to Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd ./artifacts
-          gh release upload $RELEASE_DATE ./vc_lib_dbg_win32.zip
-          gh release upload $RELEASE_DATE ./vc_lib_rel_win32.zip
-          gh release upload $RELEASE_DATE ./vc_lib_dbg_x64.zip
-          gh release upload $RELEASE_DATE ./vc_lib_rel_x64.zip
-          gh release upload $RELEASE_DATE ./filelist.txt
+            cd ./artifacts
+            gh release upload $RELEASE_DATE ./vc_lib_dbg_win32.zip
+            gh release upload $RELEASE_DATE ./vc_lib_rel_win32.zip
+            gh release upload $RELEASE_DATE ./vc_lib_dbg_x64.zip
+            gh release upload $RELEASE_DATE ./vc_lib_rel_x64.zip
+            gh release upload $RELEASE_DATE ./vc_dll_dbg_win32.zip
+            gh release upload $RELEASE_DATE ./vc_dll_rel_win32.zip
+            gh release upload $RELEASE_DATE ./vc_dll_dbg_x64.zip
+            gh release upload $RELEASE_DATE ./vc_dll_rel_x64.zip
+            gh release upload $RELEASE_DATE ./filelist.txt
