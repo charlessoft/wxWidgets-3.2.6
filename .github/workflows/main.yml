@@ -18,29 +18,29 @@ jobs:
         include:
           - configuration: 'Debug'
             platform: 'Win32'
-            vsversion: 2019
+            vsversion: 2022
           - configuration: 'Release'
             platform: 'Win32'
-            vsversion: 2019
+            vsversion: 2022
           - configuration: 'Debug'
             platform: 'x64'
-            vsversion: 2019
+            vsversion: 2022
           - configuration: 'Release'
             platform: 'x64'
-            vsversion: 2019
+            vsversion: 2022
           # DLL builds
           - configuration: 'DLL Debug'
             platform: 'Win32'
-            vsversion: 2019
+            vsversion: 2022
           - configuration: 'DLL Release'
             platform: 'Win32'
-            vsversion: 2019
+            vsversion: 2022
           - configuration: 'DLL Debug'
             platform: 'x64'
-            vsversion: 2019
+            vsversion: 2022
           - configuration: 'DLL Release'
             platform: 'x64'
-            vsversion: 2019
+            vsversion: 2022
     steps:
       - name: Checkout
         uses: actions/checkout@v4
