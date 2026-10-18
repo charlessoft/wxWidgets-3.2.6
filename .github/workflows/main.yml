@@ -64,6 +64,34 @@ jobs:
         with:
           vs-prerelease: true
 
+      - name: Install WebView2 SDK
+        shell: pwsh
+        run: |
+          Write-Host "Installing Microsoft.Web.WebView2 SDK..."
+
+          # Install NuGet CLI
+          Invoke-WebRequest -Uri https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -OutFile nuget.exe
+
+          # Install WebView2 SDK
+          .\nuget.exe install Microsoft.Web.WebView2 -Version 1.0.2792.45 -OutputDirectory packages
+
+          # Find WebView2 headers
+          $webview2Path = Get-ChildItem -Path packages -Filter "Microsoft.Web.WebView2.*" -Directory | Select-Object -First 1
+          $includePath = Join-Path $webview2Path.FullName "build\native\include"
+
+          Write-Host "WebView2 SDK installed at: $includePath"
+
+          # Add to INCLUDE environment variable
+          $currentInclude = $env:INCLUDE
+          if ($currentInclude) {
+            $newInclude = "$includePath;$currentInclude"
+          } else {
+            $newInclude = $includePath
+          }
+          echo "INCLUDE=$newInclude" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+          Write-Host "✅ WebView2 SDK installed successfully"
+
       - name: Build
         run: |
           msbuild /noLogo /m "/p:Configuration=${{ matrix.configuration }}" /p:Platform=${{ matrix.platform }} build\msw\wx_vc16.sln
