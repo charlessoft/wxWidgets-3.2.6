@@ -797,14 +797,14 @@
 // Default is 0 because WebView2 is not always available, set it to 1 if you do have it.
 //
 // Recommended setting: 1 when building for Windows with WebView2 SDK
-#define wxUSE_WEBVIEW_EDGE 0
+#define wxUSE_WEBVIEW_EDGE 1
 
 // Use the Edge (Chromium) wxWebView backend without loader DLL
 //
 // Default is 0, set it to 1 if you don't want to depend on WebView2Loader.dll.
 //
 // Recommended setting: 0
-#define wxUSE_WEBVIEW_EDGE_STATIC 0
+#define wxUSE_WEBVIEW_EDGE_STATIC 1
 
 // Use the WebKit wxWebView backend
 //
