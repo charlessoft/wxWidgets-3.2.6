@@ -72,25 +72,17 @@ jobs:
           # Install NuGet CLI
           Invoke-WebRequest -Uri https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -OutFile nuget.exe
 
-          # Install WebView2 SDK
-          .\nuget.exe install Microsoft.Web.WebView2 -Version 1.0.2792.45 -OutputDirectory packages
+          # wx_webview.vcxproj looks for the SDK in 3rdparty\webview2
+          # (include: build\native\include, libs: build\native\<arch>).
+          # MSBuild ignores the INCLUDE env var, so the SDK must live there.
+          .\nuget.exe install Microsoft.Web.WebView2 -Version 1.0.2792.45 -ExcludeVersion -OutputDirectory 3rdparty
+          Rename-Item 3rdparty\Microsoft.Web.WebView2 webview2
 
-          # Find WebView2 headers
-          $webview2Path = Get-ChildItem -Path packages -Filter "Microsoft.Web.WebView2.*" -Directory | Select-Object -First 1
-          $includePath = Join-Path $webview2Path.FullName "build\native\include"
-
-          Write-Host "WebView2 SDK installed at: $includePath"
-
-          # Add to INCLUDE environment variable
-          $currentInclude = $env:INCLUDE
-          if ($currentInclude) {
-            $newInclude = "$includePath;$currentInclude"
-          } else {
-            $newInclude = $includePath
+          if (-not (Test-Path 3rdparty\webview2\build\native\include\WebView2.h)) {
+            Write-Error "WebView2.h not found in 3rdparty\webview2"
+            exit 1
           }
-          echo "INCLUDE=$newInclude" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-          Write-Host "✅ WebView2 SDK installed successfully"
+          Write-Host "WebView2 SDK installed at 3rdparty\webview2"
 
       - name: Build
         run: |
