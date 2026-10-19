@@ -78,15 +78,6 @@ jobs:
           .\nuget.exe install Microsoft.Web.WebView2 -Version 1.0.2792.45 -ExcludeVersion -OutputDirectory 3rdparty
           Rename-Item 3rdparty\Microsoft.Web.WebView2 webview2
 
-          # The package ships x86 libs, but $(LibrariesArchitecture) doesn't
-          # resolve to "x86" for Win32 builds, so mirror them where the linker looks.
-          $native = "3rdparty\webview2\build\native"
-          if ('${{ matrix.platform }}' -eq 'Win32') {
-            New-Item -ItemType Directory -Force "$native\Win32" | Out-Null
-            Copy-Item "$native\x86\*.lib" "$native\Win32\"
-            Copy-Item "$native\x86\*.lib" "$native\"
-          }
-
           if (-not (Test-Path 3rdparty\webview2\build\native\include\WebView2.h)) {
             Write-Error "WebView2.h not found in 3rdparty\webview2"
             exit 1
